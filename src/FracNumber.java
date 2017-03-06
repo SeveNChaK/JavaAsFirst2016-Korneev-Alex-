@@ -1,235 +1,270 @@
-import org.omg.CORBA.PRIVATE_MEMBER;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.IllegalFormatException;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.math.*;
 
 public class FracNumber {
 
     private final int nBefore;
     private final int nAfter;
-    private final List<Integer> before;
-    private final List<Integer> after;
+    private final List<Integer> number;
 
-    public FracNumber(int nBefor, int nAfter, List before, List after) {
-        this.nBefore = nBefor;
-        this.nAfter = nAfter;
-        this.before = before;
-        this.after = after;
+    public FracNumber(int before, int after, List<Integer> num){
+        this.nBefore = before;
+        this.nAfter = after;
+        this.number = num;
     }
 
-    public FracNumber(String number) throws IllegalArgumentException{
-        List<Integer> b = new ArrayList<>();
-        List<Integer> a = new ArrayList<>();
-        Pattern p = Pattern.compile("(^(\\d+)(\\.|,)(\\d+)$)|(^\\d+$)");
+    public FracNumber(String number) throws NumberFormatException{
+        List<Integer> result = new ArrayList<>();
+        int before = 0;
+        int after = 0;
+        int i = 0;
+        Pattern p = Pattern.compile("((^-)|(^))((\\d+$)|(\\d+\\.\\d+$))");
         Matcher m = p.matcher(number);
-        if (!m.find()) throw new IllegalArgumentException();
-        p = Pattern.compile("(\\d+)(?=\\.|,)");
-        m = p.matcher(number);
-        if (m.find()){
-            for (int i =0;i<m.group().length();i++){
-                b.add(m.group().codePointAt(i)-'0');
+        if (!m.find()) throw new NumberFormatException();
+        if (m.group().charAt(0) =='-'){
+            i = 1;
+            result.add(1);
+        }
+        else result.add(0);
+        for(; i<m.group().length();i++){
+            if (m.group().charAt(i)=='.') continue;
+            if (after!=0||(i!=0 && m.group().charAt(i-1)=='.')){
+                after++;
+                result.add(m.group().codePointAt(i)-'0');
+            }
+            else {
+                before++;
+                result.add(m.group().codePointAt(i)-'0');
             }
         }
-        else{
-            p = Pattern.compile("\\d+");
-            m = p.matcher(number);
-            if (m.find()) {
-                for (int i = 0; i < m.group().length(); i++) {
-                    b.add(m.group().codePointAt(i) - '0');
-                }
-            }
-        }
-        this.before = b;
-        p = Pattern.compile("(?<=(\\.|,))\\d+");
-        m = p.matcher(number);
-        if (m.find()){
-            for (int i =0;i<m.group().length();i++){
-                a.add(m.group().codePointAt(i)-'0');
-            }
-        }
-        this.after = a;
-        this.nBefore = b.size();
-        this.nAfter = a.size();
+        this.nBefore = before;
+        this.nAfter = after;
+        this.number = result;
     }
 
-    private List<Integer> reversList(List list) {
-        List result = new ArrayList();
-        for (int i = list.size() - 1; i >= 0; i--) {
-            result.add(list.get(i));
-        }
-        return result;
-    }
-
-    private List<Integer> union(List before, List after) {
-        List result = new ArrayList();
-        result.addAll(before);
-        result.addAll(after);
-        return result;
-    }
-
-    private List<Integer> maxFracNumber(FracNumber a, FracNumber b){
+    public FracNumber(long n){
         List<Integer> result = new ArrayList<>();
-        List<Integer> list = new ArrayList<>();
-        List<Integer> otherList = new ArrayList<>();
-        if (a.equals(b)) return union(a.before,a.after);
-        if (a.nBefore>b.nBefore) return union(a.before,a.after);
-        if (a.nBefore<b.nBefore) return union(b.before,b.after);
-        else{
-            list = union(a.before,a.after);
-            otherList = union(b.before,b.after);
-            int max = Math.max(list.size(),otherList.size());
-            for (int i = 0; i<max-list.size(); i++){
-                list.add(0);
-            }
-            for (int i =0; i<max-otherList.size(); i++){
-                otherList.add(0);
-            }
-            int i =0;
-            while(true){
-                if (list.get(i)>otherList.get(i)) return list;
-                if (list.get(i)<otherList.get(i)) return otherList;
-                i++;
-            }
+        int befor = 0;
+        this.nAfter = 0;
+        if (n<0) result.add(1);
+        else result.add(0);
+        while (n!=0){
+            result.add(1,Math.abs((int)n%10));
+            n = n /10;
+            befor++;
         }
+        this.nBefore = befor;
+        this.number = result;
     }
 
-    public String multiplication(FracNumber other) {
-        int arrayLength = nAfter + nBefore;
-        int otherArrayLength = other.nAfter + other.nBefore;
-        List<Integer> array = union(before, after);
-        List<Integer> otherArray = union(other.before, other.after);
-        array = reversList(array);
-        otherArray = reversList(otherArray);
+    public FracNumber(int n){
+        this((long)n);
+    }
+
+    private List<Integer> workList = new ArrayList<>();  //Создаю копии списков, чтобы в дальнейщем не изменять изначальные списки
+    private List<Integer> workOther = new ArrayList<>();
+
+    private int moreOrLess(List<Integer> first, List<Integer> second){
+        if (first.get(0)==0 && second.get(0)==1) return 1;
+        if (first.get(0)==1 && second.get(0)==0) return -1;
+        for (int i =1; i<Math.min(first.size(),second.size()); i++){
+            if (first.get(i)>second.get(i)) return 1;
+            if (first.get(i)<second.get(i)) return -1;
+        }
+        return 0;
+    }
+
+    private List<Integer> excess(List<Integer> list, int before, int after){
         List<Integer> result = new ArrayList<>();
-        int p = 0;
-        int rez = 0;
-        for (int i = 0; i < arrayLength; i++) {
-            p = 0;
-            for (int j = 0; j < otherArrayLength; j++) {
-                if (i + j > result.size() - 1) {
-                    rez = array.get(i) * otherArray.get(j) + p;
-                    result.add(rez % 10);
-                } else {
-                    rez = array.get(i) * otherArray.get(j) + p + result.get(i + j);
-                    result.set(i + j, rez % 10);
-                }
-                p = rez / 10;
-            }
-            if (i + otherArrayLength > result.size() - 1) {
-                result.add(p);
-            } else {
-                result.set(i + otherArrayLength, p);
-            }
+        result.addAll(list);
+        result.remove(0);
+        while (result.lastIndexOf(0) == result.size() - 1 && result.size()!= 1 && after!=0) {
+            result.remove(result.size()-1);
+            after--;
         }
-        int resultAfterLength = nAfter + other.nAfter;
-        while (result.lastIndexOf(0) == result.size() - 1 && result.size() - resultAfterLength != 1) {
-            result.remove(result.size() - 1);
-        }
-        int resultBeforLength = result.size() - resultAfterLength;
-        while (result.indexOf(0) == 0) {
+        before = result.size() - after;
+        while (result.indexOf(0) == 0 && before!=1) {
             result.remove(0);
-            resultAfterLength--;
+            before--;
         }
-        List<Integer> resultBefore = new ArrayList<>();
-        List<Integer> resultAfter = new ArrayList<>();
-        resultBefore = reversList(result.subList(resultAfterLength, result.size()));
-        resultAfter = reversList(result.subList(0, resultAfterLength));
-        return new FracNumber(resultBeforLength, resultAfterLength, resultBefore, resultAfter).toString();
+        result.add(0,list.get(0));
+        result.add(before);
+        result.add(after);
+        return result;
     }
 
-    public String plus (FracNumber other){
-        List<Integer> resultBefore = new ArrayList<>();
-        List<Integer> resultAfter = new ArrayList<>();
+    private List<Integer> zero(List<Integer> list, int maxBefore, int maxAfter, int before, int after){
+        List<Integer> result = new ArrayList<>();
+        result.addAll(list);
+        for (int i =0; i<maxBefore-before; i++){
+            result.add(1,0);
+        }
+        for (int i =0; i<maxAfter-after; i++){
+            result.add(0);
+        }
+        return result;
+    }
+
+    public FracNumber plus(FracNumber other){
+        if (workList.size()==0) {
+            workList.clear();
+            workList.addAll(number);
+        }
+        if (workOther.size()==0) {
+            workOther.clear();
+            workOther.addAll(other.number);
+        }
+        if (workList.get(0)==0 && workOther.get(0)==1) {
+            workOther.set(0,0);
+            return this.minus(other);
+        }
+        if (workList.get(0)==1 && workOther.get(0)==0) {
+            return other.minus(this);
+        }
+        List<Integer> result = new ArrayList<>();
+        result.add(workList.get(0));
         int maxBefore = Math.max(nBefore,other.nBefore);
         int maxAfter = Math.max(nAfter,other.nAfter);
-        for (int i =0; i<maxAfter-nAfter; i++){
-            after.add(0);
-        }
-        for (int i =0; i<maxAfter-other.nAfter; i++){
-            other.after.add(0);
-        }
-        for (int i = 0; i<maxBefore-nBefore;i++){
-            before.add(0,0);
-        }
-        for (int i = 0; i<maxBefore-other.nBefore;i++){
-            other.before.add(0,0);
-        }
-
+        workList = zero(workList,maxBefore,maxAfter,nBefore,nAfter);
+        workOther = zero(workOther,maxBefore,maxAfter,other.nBefore,other.nAfter);
+        int maxSize = workList.size()-1;
         int c = 0;
-        for (int i = maxAfter-1; i>=0; i--){
-            resultAfter.add(0,(after.get(i)+other.after.get(i)+c)%10);
-            c = c/10;
-        }
-        for (int i = maxBefore-1; i>=0; i--){
-            resultBefore.add(0,(before.get(i)+other.before.get(i)+c)%10);
-            c = c/10;
+        for (int i = maxSize; i>0; i--){
+            result.add(1,(workList.get(i)+workOther.get(i)+c)%10);
+            c = (workList.get(i)+workOther.get(i)+c)/10;
         }
         if (c>0){
-            resultBefore.add(0,c);
+            result.add(1,c);
         }
-        return new FracNumber(resultBefore.size(),resultAfter.size(),resultBefore,resultAfter).toString();
+        int resultAfter = maxAfter;
+        int resultBefor = maxSize-resultAfter;
+        result = excess(result,resultBefor,resultAfter);
+        resultAfter = result.get(result.size()-1);
+        result.remove(result.size()-1);
+        resultBefor = result.get(result.size()-1);
+        result.remove(result.size()-1);
+        return new FracNumber(resultBefor,resultAfter,result);
     }
 
-    public String minus(FracNumber other){
+    public FracNumber minus(FracNumber other){
+        if (workList.size()==0) {
+            workList.clear();
+            workList.addAll(number);
+        }
+        if (workOther.size()==0) {
+            workOther.clear();
+            workOther.addAll(other.number);
+        }
+        if (workList.get(0)==0 && workOther.get(0)==1){
+            workOther.set(0,0);
+            return this.plus(other);
+        }
+        if (workList.get(0)==1 && workOther.get(0)==0){
+            workOther.set(0,1);
+            return this.plus(other);
+        }
+        if (workList.get(0)==1 && workOther.get(0)==1){
+            workOther.set(0,0);
+        }
         List<Integer> result = new ArrayList<>();
         int maxAfter = Math.max(nAfter,other.nAfter);
-        for (int i =0; i<maxAfter-nAfter; i++){
-            after.add(0);
-        }
-        for (int i =0; i<maxAfter-other.nAfter; i++){
-            other.after.add(0);
-        }
-        List<Integer> maxNumber = maxFracNumber(this,other);
+        int maxBefor = Math.max(nBefore,other.nBefore);
+        workList = zero(workList,maxBefor,maxAfter,nBefore, nAfter);
+        workOther = zero(workOther,maxBefor,maxAfter,other.nBefore, other.nAfter);
+        List<Integer> maxNumber = new ArrayList<>();
         List<Integer> minNumber = new ArrayList<>();
-        if (maxFracNumber(this,other).equals(union(this.before,this.after))){
-            minNumber = union(other.before,other.after);
+        if (moreOrLess(workList,workOther) ==1 || moreOrLess(workList,workOther) ==0){
+            maxNumber = workList;
+            minNumber = workOther;
+            result.add(0);
         }
-        else{
-            minNumber = union(before,after);
+        else {
+            maxNumber = workOther;
+            minNumber = workList;
+            result.add(1);
         }
-        maxNumber = reversList(maxNumber);
-        minNumber = reversList(minNumber);
-        int maxSize = maxNumber.size();
+        int maxSize = maxNumber.size()-1;
+        Collections.reverse(maxNumber);
+        Collections.reverse(minNumber);
         int c = 0;
         for (int i = 0; i < maxSize; i++){
             if (i < maxSize-1){
                 maxNumber.set(i+1,maxNumber.get(i+1)-1);
                 result.add(10+maxNumber.get(i)+c);
-                result.set(i,result.get(i)-minNumber.get(i));
+                result.set(i+1,result.get(i+1)-minNumber.get(i));
             }
             else{
-                result.add(maxNumber.get(i)+c);
+
+                result.add(Math.abs(maxNumber.get(i)+c-minNumber.get(i)));
             }
             c = 0;
-            if (result.get(i) / 10 > 0){
+            if (result.get(i+1) / 10 > 0){
                 c = 1;
-                result.set(i,result.get(i)%10);
+                result.set(i+1,result.get(i+1)%10);
             }
         }
         if (c!=0) result.add(c+maxNumber.get(maxSize-1));
-        int resultAfterLength = Math.max(nAfter,other.nAfter);
-        while (result.lastIndexOf(0) == result.size() - 1 && result.size() - resultAfterLength != 1) {
-            result.remove(result.size() - 1);
+        int resultAfter = Math.max(nAfter,other.nAfter);
+        int resultBefor = result.size() - resultAfter-1;
+        result.add(result.get(0));
+        result.remove(0);
+        Collections.reverse(result);
+        result = excess(result,resultBefor,resultAfter);
+        resultAfter = result.get(result.size()-1);
+        result.remove(result.size()-1);
+        resultBefor = result.get(result.size()-1);
+        result.remove(result.size()-1);
+        return new FracNumber(resultBefor,resultAfter,result);
+    }
+
+    public FracNumber multiplication(FracNumber other) {
+        if (workList.size()==0) {
+            workList.clear();
+            workList.addAll(number);
         }
-        result = reversList(result);
-        int resultBeforLength = result.size() - resultAfterLength;
-        while (result.indexOf(0) == 0 && result.size() - resultBeforLength != 0) {
-            result.remove(0);
-            resultAfterLength--;
+        if (workOther.size()==0) {
+            workOther.clear();
+            workOther.addAll(other.number);
         }
-        List<Integer> resultBefore = new ArrayList<>();
-        List<Integer> resultAfter = new ArrayList<>();
-        resultBefore = result.subList(0, resultBeforLength);
-        resultAfter = result.subList(resultBeforLength, result.size());
-        if (result.size()==1 && result.get(0)==0) return "0";
-        if (union(this.before,this.after).equals(maxFracNumber(this,other))) return new FracNumber(resultBeforLength,resultAfterLength,resultBefore,resultAfter).toString();
-        return "-" + new FracNumber(resultBeforLength,resultAfterLength,resultBefore,resultAfter).toString();
+        workList.remove(0);
+        workOther.remove(0);
+        List<Integer> result = new ArrayList<>();
+        Collections.reverse(workList);
+        Collections.reverse(workOther);
+        int p = 0;
+        int rez = 0;
+        for (int i = 0; i < workList.size(); i++) {
+            p = 0;
+            for (int j = 0; j < workOther.size(); j++) {
+                if (i + j > result.size() - 1) {
+                    rez = workList.get(i) * workOther.get(j) + p;
+                    result.add(rez % 10);
+                } else {
+                    rez = workList.get(i) * workOther.get(j) + p + result.get(i + j);
+                    result.set(i + j, rez % 10);
+                }
+                p = rez / 10;
+            }
+            if (i + workOther.size() > result.size() - 1) {
+                result.add(p);
+            } else {
+                result.set(i + workOther.size(), p);
+            }
+        }
+        int resultAfter = nAfter + other.nAfter;
+        int resultBefor = result.size() - resultAfter;
+        Collections.reverse(result);
+        if (number.get(0)==1 && other.number.get(0)==0 || other.number.get(0)==1 && number.get(0)==0) result.add(0,1);
+        if (number.get(0)==1 && other.number.get(0)==1) result.add(0,0);
+        if (number.get(0)==0 && other.number.get(0)==0) result.add(0,0);
+        result = excess(result,resultBefor,resultAfter);
+        resultAfter = result.get(result.size()-1);
+        result.remove(result.size()-1);
+        resultBefor = result.get(result.size()-1);
+        result.remove(result.size()-1);
+        return new FracNumber(resultBefor, resultAfter, result);
     }
 
     @Override
@@ -237,15 +272,8 @@ public class FracNumber {
         if (this == obj) return true;
         if (obj instanceof FracNumber) {
             FracNumber other = (FracNumber) obj;
-            if (nBefore == other.nBefore && nAfter == other.nAfter) {
-                for (int i = 0; i < nBefore; i++) {
-                    if (before.get(i) != other.before.get(i)) return false;
-                }
-                for (int i = 0; i < nAfter; i++) {
-                    if (after.get(i) != other.after.get(i)) return false;
-                }
-                return true;
-            }
+            if (number.containsAll(other.number)) return true;
+            else  return false;
         }
         return false;
     }
@@ -254,21 +282,22 @@ public class FracNumber {
     public int hashCode() {
         int result = nBefore;
         result = 31 * result + nAfter;
-        result = 31 * result + before.hashCode();
-        result = 31 * result + after.hashCode();
+        result = 31 * result + number.hashCode();
         return result;
     }
 
     @Override
-    public String toString() {
-        String str = "";
-        for (int i = 0; i < nBefore; i++) {
-            str = str + before.get(i);
+    public String toString(){
+        StringBuilder result = new StringBuilder();
+        if(number.get(0)==1) result.append('-');
+        for (int i = 1; i <= nBefore; i++){
+            result.append(number.get(i));
         }
-        str += '.';
-        for (int i = 0; i < nAfter; i++) {
-            str = str + after.get(i);
+        if (nAfter!=0) result.append('.');
+        for (int i = nBefore+1; i <= nBefore+nAfter; i++){
+            result.append(number.get(i));
         }
-        return str;
+        return result.toString();
     }
+
 }

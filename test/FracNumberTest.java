@@ -21,6 +21,8 @@ public class FracNumberTest {
 
     @Test
     public void plus() throws Exception {
+        assertEquals("1.01", new FracNumber(-22.12).plus(new FracNumber(23.13)).toString());
+        assertEquals("45.25", new FracNumber(22.12).plus(new FracNumber(23.13)).toString());
         assertEquals("45.25", new FracNumber("22.12").plus(new FracNumber("23.13")).toString());
         assertEquals("0.025", new FracNumber("0.02").plus(new FracNumber("0.005")).toString());
         assertEquals("22.5", new FracNumber("22").plus(new FracNumber("0.5")).toString());
@@ -33,6 +35,8 @@ public class FracNumberTest {
         assertEquals("-8", new FracNumber("-2").plus(new FracNumber("-6")).toString());
         assertEquals("-4", new FracNumber("2").plus(new FracNumber("-6")).toString());
         assertEquals("-1", new FracNumber("-0.6").plus(new FracNumber("-0.4")).toString());
+        assertEquals("1000", new FracNumber(999).plus(new FracNumber(1)).toString());
+        assertEquals("999", new FracNumber(999).plus(new FracNumber(-0)).toString());
 
     }
 

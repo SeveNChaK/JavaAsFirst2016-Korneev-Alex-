@@ -1,7 +1,6 @@
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.math.*;
 
 public class FracNumber {
 
@@ -63,8 +62,32 @@ public class FracNumber {
         this((long)n);
     }
 
-    private List<Integer> workList = new ArrayList<>();  //Создаю копии списков, чтобы в дальнейщем не изменять изначальные списки
-    private List<Integer> workOther = new ArrayList<>();
+    public FracNumber(double n){
+        List<Integer> result = new ArrayList<>();
+        int befor = 0;
+        int after = 0;
+        double copyN = n;
+        if(n<0) result.add(1);
+        else result.add(0);
+        do {
+            result.add(1, Math.abs((int)(copyN % 10)));
+            copyN = copyN/10;
+            befor++;
+        } while ((int)copyN/10!=0 || (int)copyN%10!=0);
+        copyN = n;
+        do {
+            copyN =copyN *10;
+            result.add(Math.abs((int)copyN % 10));
+            after++;
+        } while (result.size()!=10);
+        this.nBefore = befor;
+        this.nAfter = after;
+        this.number = result;
+    }
+
+    public FracNumber(float n){
+        this((double)n);
+    }
 
     private int moreOrLess(List<Integer> first, List<Integer> second){
         if (first.get(0)==0 && second.get(0)==1) return 1;
@@ -108,25 +131,30 @@ public class FracNumber {
     }
 
     public FracNumber plus(FracNumber other){
-        if (workList.size()==0) {
-            workList.clear();
-            workList.addAll(number);
+        if (number.size()==0) {
+            number.clear();
+            number.addAll(number);
         }
-        if (workOther.size()==0) {
-            workOther.clear();
-            workOther.addAll(other.number);
+        if (other.number.size()==0) {
+            other.number.clear();
+            other.number.addAll(other.number);
         }
-        if (workList.get(0)==0 && workOther.get(0)==1) {
-            workOther.set(0,0);
+        if (number.get(0)==0 && other.number.get(0)==1) {
+            other.number.set(0,0);
             return this.minus(other);
         }
-        if (workList.get(0)==1 && workOther.get(0)==0) {
+        if (number.get(0)==1 && other.number.get(0)==0) {
+            number.set(0,0);
             return other.minus(this);
         }
         List<Integer> result = new ArrayList<>();
-        result.add(workList.get(0));
+        result.add(number.get(0));
         int maxBefore = Math.max(nBefore,other.nBefore);
         int maxAfter = Math.max(nAfter,other.nAfter);
+        List<Integer> workList = new ArrayList<>();
+        List<Integer> workOther = new ArrayList<>();
+        workList.addAll(number);
+        workOther.addAll(other.number);
         workList = zero(workList,maxBefore,maxAfter,nBefore,nAfter);
         workOther = zero(workOther,maxBefore,maxAfter,other.nBefore,other.nAfter);
         int maxSize = workList.size()-1;
@@ -149,28 +177,32 @@ public class FracNumber {
     }
 
     public FracNumber minus(FracNumber other){
-        if (workList.size()==0) {
-            workList.clear();
-            workList.addAll(number);
+        if (number.size() == 0) {
+            number.clear();
+            number.addAll(number);
         }
-        if (workOther.size()==0) {
-            workOther.clear();
-            workOther.addAll(other.number);
+        if (other.number.size()==0) {
+            other.number.clear();
+            other.number.addAll(other.number);
         }
-        if (workList.get(0)==0 && workOther.get(0)==1){
-            workOther.set(0,0);
+        if (number.get(0)==0 && other.number.get(0)==1){
+            other.number.set(0,0);
             return this.plus(other);
         }
-        if (workList.get(0)==1 && workOther.get(0)==0){
-            workOther.set(0,1);
+        if (number.get(0)==1 && other.number.get(0)==0){
+            other.number.set(0,1);
             return this.plus(other);
         }
-        if (workList.get(0)==1 && workOther.get(0)==1){
-            workOther.set(0,0);
+        if (number.get(0)==1 && other.number.get(0)==1){
+            other.number.set(0,0);
         }
         List<Integer> result = new ArrayList<>();
         int maxAfter = Math.max(nAfter,other.nAfter);
         int maxBefor = Math.max(nBefore,other.nBefore);
+        List<Integer> workList = new ArrayList<>();
+        List<Integer> workOther = new ArrayList<>();
+        workList.addAll(number);
+        workOther.addAll(other.number);
         workList = zero(workList,maxBefor,maxAfter,nBefore, nAfter);
         workOther = zero(workOther,maxBefor,maxAfter,other.nBefore, other.nAfter);
         List<Integer> maxNumber = new ArrayList<>();
@@ -220,14 +252,12 @@ public class FracNumber {
     }
 
     public FracNumber multiplication(FracNumber other) {
-        if (workList.size()==0) {
-            workList.clear();
-            workList.addAll(number);
-        }
-        if (workOther.size()==0) {
-            workOther.clear();
-            workOther.addAll(other.number);
-        }
+        List<Integer> workList = new ArrayList<>();
+        List<Integer> workOther = new ArrayList<>();
+        workList.clear();
+        workOther.clear();
+        workList.addAll(number);
+        workOther.addAll(other.number);
         workList.remove(0);
         workOther.remove(0);
         List<Integer> result = new ArrayList<>();
@@ -299,5 +329,4 @@ public class FracNumber {
         }
         return result.toString();
     }
-
 }

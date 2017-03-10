@@ -63,30 +63,19 @@ public class FracNumber {
     }
 
     public FracNumber(double n){
-        List<Integer> result = new ArrayList<>();
-        int befor = 0;
-        int after = 0;
-        double copyN = n;
-        if(n<0) result.add(1);
-        else result.add(0);
-        do {
-            result.add(1, Math.abs((int)(copyN % 10)));
-            copyN = copyN/10;
-            befor++;
-        } while ((int)copyN/10!=0 || (int)copyN%10!=0);
-        copyN = n;
-        do {
-            copyN =copyN *10;
-            result.add(Math.abs((int)copyN % 10));
-            after++;
-        } while (result.size()!=10);
-        this.nBefore = befor;
-        this.nAfter = after;
-        this.number = result;
+        this(Double.toString(n));
     }
 
     public FracNumber(float n){
         this((double)n);
+    }
+
+    private int power(int x, int a){
+        int result = 1;
+        for (int i = 1; i<=a; i++){
+            result = result*x;
+        }
+        return result;
     }
 
     private int moreOrLess(List<Integer> first, List<Integer> second){
@@ -128,6 +117,34 @@ public class FracNumber {
             result.add(0);
         }
         return result;
+    }
+
+    public FracNumber rounding(int order) {
+        List<Integer> result = new ArrayList<>();
+        List<Integer> thisResult = new ArrayList<>();
+        if (nAfter <= order) {
+            return new FracNumber(nBefore, nAfter, number);
+        } else {
+            thisResult.addAll(number.subList(0,nBefore+order+1));
+            int resultBefore = 0;
+            int resultAfter = 0;
+            if (number.get(nBefore + order+1) >= 5) {
+                resultBefore = 1;
+                resultAfter = order;
+                result.add(1);
+                for (int i = order; i > 0; i--) {
+                    result.add(0, 0);
+                }
+                result.add(0,number.get(0));
+                return new FracNumber(nBefore,order,thisResult).plus(new FracNumber(resultBefore,resultAfter,result));
+            }
+            else{
+                resultBefore = nBefore;
+                resultAfter = order;
+                result.addAll(number.subList(0,nBefore+order+1));
+                return new FracNumber(resultBefore,resultAfter,result);
+            }
+        }
     }
 
     public FracNumber plus(FracNumber other){
@@ -295,6 +312,40 @@ public class FracNumber {
         resultBefor = result.get(result.size()-1);
         result.remove(result.size()-1);
         return new FracNumber(resultBefor, resultAfter, result);
+    }
+
+    public double toDouble(){
+        double result = 0.0;
+        for (int i =1; i <= nBefore; i++){
+            result = result+number.get(i)*power(10,nBefore-i);
+        }
+        for (int i =1; i<=nAfter; i++){
+            result = result + (double)number.get(i + nBefore) / (double)power(10, i);
+        }
+        if (number.get(0)==1) result *= -1;
+        return result;
+    }
+
+    public float toFloat(){
+        float result = 0;
+        for (int i =1; i <= nBefore; i++){
+            result = result+number.get(i)*power(10,nBefore-i);
+        }
+        for (int i =1; i<=nAfter; i++){
+            result = result + (float)number.get(i + nBefore) / (float) power(10, i);
+        }
+        if (number.get(0)==1) result *= -1;
+        return result;
+    }
+
+    public int toInt() throws IllegalArgumentException{
+        if (nAfter!=0) throw new IllegalArgumentException();
+        int result = 0;
+        for (int i =1; i <= nBefore; i++){
+            result = result+number.get(i)*power(10,nBefore-i);
+        }
+        if (number.get(0)==1) result *= -1;
+        return result;
     }
 
     @Override

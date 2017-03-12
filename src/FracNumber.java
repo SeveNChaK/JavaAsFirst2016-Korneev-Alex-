@@ -166,12 +166,12 @@ public class FracNumber {
         }
         List<Integer> result = new ArrayList<>();
         result.add(number.get(0));
-        int maxBefore = Math.max(nBefore,other.nBefore);
-        int maxAfter = Math.max(nAfter,other.nAfter);
         List<Integer> workList = new ArrayList<>();
         List<Integer> workOther = new ArrayList<>();
         workList.addAll(number);
         workOther.addAll(other.number);
+        int maxBefore = Math.max(nBefore,other.nBefore);
+        int maxAfter = Math.max(nAfter,other.nAfter);
         workList = zero(workList,maxBefore,maxAfter,nBefore,nAfter);
         workOther = zero(workOther,maxBefore,maxAfter,other.nBefore,other.nAfter);
         int maxSize = workList.size()-1;
@@ -214,12 +214,12 @@ public class FracNumber {
             other.number.set(0,0);
         }
         List<Integer> result = new ArrayList<>();
-        int maxAfter = Math.max(nAfter,other.nAfter);
-        int maxBefor = Math.max(nBefore,other.nBefore);
         List<Integer> workList = new ArrayList<>();
         List<Integer> workOther = new ArrayList<>();
         workList.addAll(number);
         workOther.addAll(other.number);
+        int maxAfter = Math.max(nAfter,other.nAfter);
+        int maxBefor = Math.max(nBefore,other.nBefore);
         workList = zero(workList,maxBefor,maxAfter,nBefore, nAfter);
         workOther = zero(workOther,maxBefor,maxAfter,other.nBefore, other.nAfter);
         List<Integer> maxNumber = new ArrayList<>();
@@ -341,6 +341,16 @@ public class FracNumber {
     public int toInt() throws IllegalArgumentException{
         if (nAfter!=0) throw new IllegalArgumentException();
         int result = 0;
+        for (int i =1; i <= nBefore; i++){
+            result = result+number.get(i)*power(10,nBefore-i);
+        }
+        if (number.get(0)==1) result *= -1;
+        return result;
+    }
+
+    public long toLong() throws IllegalArgumentException{
+        if (nAfter!=0) throw new IllegalArgumentException();
+        long result = 0;
         for (int i =1; i <= nBefore; i++){
             result = result+number.get(i)*power(10,nBefore-i);
         }

@@ -4,6 +4,13 @@ import static org.junit.Assert.*;
 
 public class FracNumberTest {
     @Test
+    public void toLong() throws Exception {
+        assertEquals(10, new FracNumber("10").toLong());
+        assertEquals(-10, new FracNumber("-10").toLong());
+        assertEquals(0, new FracNumber("0").toLong());
+    }
+
+    @Test
     public void toInt() throws Exception {
         assertEquals(10, new FracNumber("10").toInt());
         assertEquals(-10, new FracNumber("-10").toInt());

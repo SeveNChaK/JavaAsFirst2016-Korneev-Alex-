@@ -22,7 +22,7 @@ public class FracNumberTest {
         assertEquals(0.123456789, new FracNumber("0.123456789").toFloat(), 1e-5);
         assertEquals(-9.99, new FracNumber("-9.99").toFloat(), 1e-5);
         assertEquals(-0.99, new FracNumber("-0.99").toFloat(), 1e-5);
-        assertEquals(10, new FracNumber(10).toDouble(),1e-5);
+        assertEquals(10, new FracNumber(10).toDouble(), 1e-5);
     }
 
     @Test
@@ -108,7 +108,7 @@ public class FracNumberTest {
     public void testToString() throws Exception {
         assertEquals("123.21", new FracNumber("123.21").toString());
         assertEquals("-123.21", new FracNumber("-123.21").toString());
-        assertEquals("123", new FracNumber("123").toString());
+        assertEquals("123", new FracNumber(123).toString());
         assertEquals("123.0", new FracNumber("123.0").toString());
         assertEquals("00123.0", new FracNumber("00123.0").toString());
         assertEquals("-123", new FracNumber("-123").toString());
